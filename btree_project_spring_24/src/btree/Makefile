@@ -4,7 +4,10 @@ JAR=btreelib.jar
 ASSIGNMENT=btree_project_spring_24
 
 #change the ASSIGN path to the path where you have downloaded on your computer
-ASSIGN=/home/abhishek/DBMS-5331
+ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+ROOT_DIR := $(shell echo $(ROOT_DIR) | sed 's|\(.*\)btree_project_spring_24/.*|\1|')
+
+ASSIGN=$(ROOT_DIR)
 
 # Do not change the following paths if you are using omega.uta.edu (Spring 2024)
 LIBPATH = $(ASSIGN)/$(ASSIGNMENT)/lib/$(JAR)
