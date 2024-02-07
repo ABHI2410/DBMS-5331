@@ -4,7 +4,7 @@ JAR=btreelib.jar
 ASSIGNMENT=btree_project_spring_24
 
 #change the ASSIGN path to the path where you have downloaded
-ASSIGN=/home/s/sa/santraa/CSE5331
+ASSIGN=/home/abhishek/DBMS-5331
 
 # Do not change the following paths if you are using omega.uta.edu (Spring 2024)
 LIBPATH = $(ASSIGN)/$(ASSIGNMENT)/lib/$(JAR)
