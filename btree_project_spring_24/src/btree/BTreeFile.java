@@ -367,7 +367,12 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			IOException
 
 	{
-		// [ASantra: 1/14/2024] Write your code here
+		if (headerPage.get_rootId().pid == INVALID_PAGE){
+
+		}
+		else {
+			_insert(key,rid)
+		}
 	}
 
 	private KeyDataEntry _insert(KeyClass key, RID rid, PageId currentPageId)
@@ -596,6 +601,19 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			PinPageException, IndexSearchException, IteratorException {
             
             // [ASantra: 1/14/2024] Remove the return statement and start your code.
+
+			boolean check = true;
+			while (check){
+				BTLeafPage leafpage = findRunStart(key,rid);
+				if (leafpage == null){
+					check = false;
+				}
+				else{
+					BTLeafPage::delUserRid(leafpage);
+				}
+					
+
+			} 
 			
             return false;
 	}
