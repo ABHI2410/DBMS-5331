@@ -29,7 +29,7 @@ class BTDriver implements GlobalConst {
 	public int postfix = 0;
 	public int keyType;
 	public BTFileScan scan;
-	public int flag = 0;
+	public int flag = 0; // change it to 0
 
 	protected String dbpath;
 	protected String logpath;

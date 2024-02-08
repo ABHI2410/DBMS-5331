@@ -366,12 +366,19 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			IteratorException, LeafDeleteException, InsertException,
 			IOException
 
-	{
-		if (headerPage.get_rootId().pid == INVALID_PAGE){
-
+	{		
+		if (getHeaderPage().get_rootId().pid == INVALID_PAGE){
+			System.out.println("Got into if statement");
+			BTLeafPage newleafPage = new BTLeafPage(getHeaderPage().get_keyType());
+			newleafPage.setNextPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class
+			newleafPage.setPrevPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class
+			newleafPage.insertRecord(key,rid); // class function 
+			updateHeader(newleafPage.getCurPage());// getCurPage() inherited from HFPage Class
+					
 		}
 		else {
-			_insert(key,rid)
+			System.out.println("Got into else statement");
+			_insert(key,rid,getHeaderPage().get_rootId());
 		}
 	}
 
@@ -602,20 +609,22 @@ public class BTreeFile extends IndexFile implements GlobalConst {
             
             // [ASantra: 1/14/2024] Remove the return statement and start your code.
 
-			boolean check = true;
-			while (check){
-				BTLeafPage leafpage = findRunStart(key,rid);
-				if (leafpage == null){
-					check = false;
-				}
-				else{
-					BTLeafPage::delUserRid(leafpage);
-				}
+			// boolean check = true;
+			// while (check){
+			// 	BTLeafPage leafpage = findRunStart(key,rid);
+			// 	if (leafpage == null){
+			// 		System.out.println("Key not found.");
+			// 		check false;
+			// 	}
+			// 	else{
+			// 		leafpage.delEntry(key,rid);
+			// 	}
 					
 
-			} 
+			// } 
 			
-            return false;
+            // return check;
+			return false;
 	}
 	/**
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
