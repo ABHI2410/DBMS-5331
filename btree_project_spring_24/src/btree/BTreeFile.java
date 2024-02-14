@@ -412,7 +412,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				KeyDataEntry currententry = leafpage.getFirst(emptyrid);
 				int slotcout = leafpage.getSlotCnt();
 				for (int i = 0; i<slotcout;i++){
-					if (i<31){
+					if (i<(slotcout/2)){
 						currententry = leafpage.getNext(emptyrid);
 					}
 					else {
@@ -424,8 +424,8 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					}				
 				}
 				
-				RID firstrecord = leafpage.firstRecord();
-				KeyDataEntry entry = leafpage.getFirst(firstrecord); 
+				RID firstrecord = newleafPage.firstRecord();
+				KeyDataEntry entry = newleafPage.getFirst(firstrecord); 
 				if(BT.keyCompare(keyTobBeInserted,entry.key)<0){
 					newleafPage.insertRecord(key,rid);
 				}
@@ -443,14 +443,14 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		}
 		else if (currentPage.getType() == NodeType.INDEX){
 			BTIndexPage pageIndex = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
-			KeyDataEntry curEntry;
-			if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted,curEntry.key) < 0) {
+			KeyDataEntry curEntry = pageIndex.getFirst(new RID());
+			if (curEntry != null && key != null && BT.keyCompare(key,curEntry.key) < 0) {
 					PageId prevpageno = pageIndex.getPrevPage();
 					curEntry = _insert(key,rid,prevpageno);
 				}
 			else if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted, curEntry.key) >= 0) {
 				//figure out how to get right side page id 
-				PageId nexpage =new PageId(Integer.parseInt(curEntry.data.toString()));
+				PageId nexpage = curEntry.data;
 				curEntry = _insert(key,rid,nexpage);
 				
 			}
@@ -464,24 +464,30 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				}
 				else {
 
-					//Spilt
-
-
-
-
-
-
-
+					BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
+					RID emptyrid = new RID();
+					KeyDataEntry currententry = pageIndex.getFirst(emptyrid);
+					int slotcout = pageIndex.getSlotCnt();
+					for (int i = 0; i<slotcout;i++){
+						if (i<(slotcout/2)){
+							currententry = pageIndex.getNext(emptyrid);
+						}
+						else {
+							//wrong data being used check for right data and insert
+							newindexPage.insertRecord(currententry.key,((IndexData)(curEntry.data)).getData());
+							pageIndex.deleteSortedRecord(emptyrid);
+						}				
+					}
 					PageId prevpageno = pageIndex.getPrevPage();
-					RID newRid = pageIndex.firstRecord();
+					RID newRid = newindexPage.firstRecord();
 					KeyDataEntry curEntry = pageIndex.getFirst(newRid);
 
 					if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted,curEntry.key) < 0) {
-						//manuly insert 
+						 pageIndex.insertKey(key,((IndexData)curEntry.data).getData())
+
 					}
 					else if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted, curEntry.key) >= 0) {
-						PageId nexpage =new PageId(Integer.parseInt(curEntry.data.toString()));
-						//manuly insert 
+						pageIndex.insertKey(key,newindexPage.getCurPage()) 
 					}
 					else {
 						System.out.prinln("Show error");
