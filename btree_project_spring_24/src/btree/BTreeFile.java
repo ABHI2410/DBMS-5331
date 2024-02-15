@@ -374,14 +374,15 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			newleafPage.setPrevPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class
 			newleafPage.insertRecord(key,rid); // class function 
 			updateHeader(newleafPage.getCurPage());// getCurPage() inherited from HFPage Class
-					
+			return;		
 		}
 		else {
 			KeyDataEntry header = _insert(key,rid,getHeaderPage().get_rootId());
 			if (header != null){
 				BTIndexPage newindexpage = new BTIndexPage(getHeaderPage().get_keyType());
+				BTSortedPage temppage = new BTSortedPage(getHeaderPage().get_rootId().pid);
 				newindexpage.insertKey(header.key,((IndexData)(header.data)).getData());
-				newindexpage.setPrevPage(getHeaderPage().getCurPage());
+				newindexpage.setPrevPage(getHeaderPage().get_rootId());
 				updateHeader(newindexpage.getCurPage());
 			}
 		}
@@ -397,8 +398,6 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 	{
 		// [ASantra: 1/14/2024] Remove the return statement and start your code.
 
-		KeyClass keyTobBeInserted = key;
-		RID ridToBeInserted = rid;
 		BTSortedPage currentPage = new BTSortedPage(currentPageId,getHeaderPage().get_keyType());
 		if (currentPage.getType() == NodeType.LEAF){
 			BTLeafPage leafpage = new BTLeafPage(currentPageId,getHeaderPage().get_keyType());
@@ -408,107 +407,98 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			}
 			else {
 				BTLeafPage newleafPage = new BTLeafPage(getHeaderPage().get_keyType());
-				RID emptyrid = new RID();
-				KeyDataEntry currententry = leafpage.getFirst(emptyrid);
+				newleafPage.setNextPage(leafpage.getNextPage());
+				newleafPage.setPrevPage(currentPageId);
+				leafpage.setNextPage(newleafPage.getCurPage());
+
+
+				KeyDataEntry currententry = leafpage.getFirst(new RID());
 				int slotcout = leafpage.getSlotCnt();
 				for (int i = 0; i<slotcout;i++){
-					if (i<(slotcout/2)){
-						currententry = leafpage.getNext(emptyrid);
-					}
-					else {
-						//wrong data being used check for right data and insert
-						newleafPage.insertRecord(currententry.key,((LeafData)(currententry.data)).getData());
-						KeyDataEntry tempEntry = leafpage.getCurrent(emptyrid);
-						
-						leafpage.deleteSortedRecord(emptyrid);
-					}				
+					KeyDataEntry key_data = leafpage.getCurrent(new RID());
+					newleafPage.insertRecord(key_data.key,((LeafData)(key_data.data)).getData());
+					currentPage.deleteSortedRecord(new RID());
+
 				}
+			
+				for (int i = 0; i<slotcout/2;i++){
+					KeyDataEntry key_data = newleafPage.getCurrent(new RID());
+					leafpage.insertRecord(key_data.key,((LeafData)(key_data.data)).getData());
+					newleafPage.deleteSortedRecord(new RID());
+
+				}
+			
 				
-				RID firstrecord = newleafPage.firstRecord();
-				KeyDataEntry entry = newleafPage.getFirst(firstrecord); 
-				if(BT.keyCompare(keyTobBeInserted,entry.key)<0){
+
+				KeyDataEntry entry = newleafPage.getFirst(new RID()); 
+				if(BT.keyCompare(entry.key,key)<0){
 					newleafPage.insertRecord(key,rid);
 				}
-				else if (BT.keyCompare(keyTobBeInserted,entry.key)>=0){
+				else if (BT.keyCompare(entry.key,key)>=0){
 					leafpage.insertRecord(key,rid);
 				}
 				else {
 					System.out.println("Invalid key");
 				}
 
-				KeyDataEntry value_to_return = new KeyDataEntry(entry.key,newleafPage.getCurPage());
-				return value_to_return; 		
+				return new KeyDataEntry(entry.key,newleafPage.getCurPage());		
+				
 				
 			}
 		}
 		else if (currentPage.getType() == NodeType.INDEX){
-			BTIndexPage pageIndex = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
-			KeyDataEntry curEntry = pageIndex.getFirst(new RID());
-			if (curEntry != null && key != null && BT.keyCompare(key,curEntry.key) < 0) {
-					PageId prevpageno = pageIndex.getPrevPage();
-					curEntry = _insert(key,rid,prevpageno);
-				}
-			else if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted, curEntry.key) >= 0) {
-				//figure out how to get right side page id 
-				PageId nexpage = curEntry.data;
-				curEntry = _insert(key,rid,nexpage);
-				
+			BTIndexPage indexpage = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
+			KeyDataEntry curEntry = _insert(key,rid,indexpage.getPageNoByKey(key));
+			if (curEntry == null){
+				return null;
+			}
+			if (indexpage.available_space() > BT.getKeyDataLength(key,NodeType.INDEX)){			
+				indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+				return null;
 			}
 			else {
-				System.out.println("Error");
-			}
-			if (curEntry != null){
-				if (pageIndex.available_space() > BT.getKeyDataLength(key,NodeType.INDEX)){			
-					pageIndex.insertKey(key,((IndexData)curEntry.data).getData());
-					return null;
+				BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
+				KeyDataEntry currententry = indexpage.getFirst(new RID());
+				int slotcout = indexpage.getSlotCnt();
+				for (int i = 0; i<slotcout;i++){
+					KeyDataEntry key_data = indexpage.getFirst(new RID());
+					newindexPage.insertKey(key_data.key,indexpage.getPageNoByKey(key));
+					currentPage.deleteSortedRecord(new RID());
+
+				}
+			
+				for (int i = 0; i<slotcout/2;i++){
+					KeyDataEntry key_data = newindexPage.getFirst(new RID());
+					indexpage.insertKey(key_data.key,newindexPage.getPageNoByKey(key));
+					newindexPage.deleteSortedRecord(new RID());
+
+				}
+			
+				KeyDataEntry entry = newindexPage.getFirst(new RID()); 
+				if(BT.keyCompare(entry.key,curEntry.key)<0){
+					indexpage.insertKey(key,((IndexData)curEntry.data).getData());
+				}
+				else if (BT.keyCompare(entry.key,curEntry.key)>=0){
+					newindexPage.insertKey(key,((IndexData)curEntry.data).getData());
 				}
 				else {
-
-					BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
-					RID emptyrid = new RID();
-					KeyDataEntry currententry = pageIndex.getFirst(emptyrid);
-					int slotcout = pageIndex.getSlotCnt();
-					for (int i = 0; i<slotcout;i++){
-						if (i<(slotcout/2)){
-							currententry = pageIndex.getNext(emptyrid);
-						}
-						else {
-							//wrong data being used check for right data and insert
-							newindexPage.insertRecord(currententry.key,((IndexData)(curEntry.data)).getData());
-							pageIndex.deleteSortedRecord(emptyrid);
-						}				
-					}
-					PageId prevpageno = pageIndex.getPrevPage();
-					RID newRid = newindexPage.firstRecord();
-					KeyDataEntry curEntry = pageIndex.getFirst(newRid);
-
-					if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted,curEntry.key) < 0) {
-						 pageIndex.insertKey(key,((IndexData)curEntry.data).getData())
-
-					}
-					else if (curEntry != null && keyTobBeInserted != null && BT.keyCompare(keyTobBeInserted, curEntry.key) >= 0) {
-						pageIndex.insertKey(key,newindexPage.getCurPage()) 
-					}
-					else {
-						System.out.prinln("Show error");
-					}
-
+					System.out.println("Invalid key");
 				}
-				return somevalue;
+
+				curEntry = newindexPage.getFirst(new RID());
+				newindexPage.setPrevPage( ((IndexData)curEntry.data).getData());
+	  			newindexPage.deleteSortedRecord(new RID());
+				return curEntry; 		
 			}
-			else{
-				return null
-			}
-				
-		
 		}
-		else {
-			System.out.println("Show Error");
+		else{
+			System.out.println("Wrong node type");
 			return null;
 		}
-			
+				
 		
 	}
+
 
 	
 
@@ -730,7 +720,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			// 	BTLeafPage leafpage = findRunStart(key,rid);
 			// 	if (leafpage == null){
 			// 		System.out.println("Key not found.");
-			// 		check false;
+			// 		check = false;
 			// 	}
 			// 	else{
 			// 		leafpage.delEntry(key,rid);
@@ -741,6 +731,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			
             // return check;
 			return false;
+
 	}
 	/**
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
