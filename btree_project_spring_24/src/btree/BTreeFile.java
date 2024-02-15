@@ -411,7 +411,10 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				newleafPage.setPrevPage(currentPageId);
 				leafpage.setNextPage(newleafPage.getCurPage());
 
-
+				if (newleafPage.getNextPage().pid != INVALID_PAGE){
+					BTLeafPage rightpage = new BTLeafPage(newleafPage.getNextPage(), getHeaderPage().get_keyType());
+					rightpage.setPrevPage(newleafPage.getCurPage());
+				}
 				KeyDataEntry currententry = leafpage.getFirst(new RID());
 				int slotcout = leafpage.getSlotCnt();
 				for (int i = 0; i<slotcout;i++){
@@ -457,19 +460,19 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				return null;
 			}
 			else {
+
 				BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
-				KeyDataEntry currententry = indexpage.getFirst(new RID());
 				int slotcout = indexpage.getSlotCnt();
 				for (int i = 0; i<slotcout;i++){
 					KeyDataEntry key_data = indexpage.getFirst(new RID());
-					newindexPage.insertKey(key_data.key,indexpage.getPageNoByKey(key));
+					newindexPage.insertKey(key_data.key,((IndexData)key_data.data).getData());
 					currentPage.deleteSortedRecord(new RID());
 
 				}
 			
 				for (int i = 0; i<slotcout/2;i++){
 					KeyDataEntry key_data = newindexPage.getFirst(new RID());
-					indexpage.insertKey(key_data.key,newindexPage.getPageNoByKey(key));
+					indexpage.insertKey(key_data.key,((IndexData)key_data.data).getData());
 					newindexPage.deleteSortedRecord(new RID());
 
 				}
