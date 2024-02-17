@@ -370,14 +370,19 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 	{		
 		if (getHeaderPage().get_rootId().pid == INVALID_PAGE){
 			BTLeafPage newleafPage = new BTLeafPage(getHeaderPage().get_keyType());
+			// need to pin the page
+			pinPage(newleafPage.getCurPage());
 			newleafPage.setNextPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class
 			newleafPage.setPrevPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class
 			newleafPage.insertRecord(key,rid); // class function 
 			updateHeader(newleafPage.getCurPage());// getCurPage() inherited from HFPage Class
+			unpinPage(newleafPage.getCurPage(), true);
 			return;		
 		}
 		else {
 			KeyDataEntry header = _insert(key,rid,getHeaderPage().get_rootId());
+			//pin the page
+			pinPage(headerPageId);
 			if (header != null){
 				BTIndexPage newindexpage = new BTIndexPage(getHeaderPage().get_keyType());
 				BTSortedPage temppage = new BTSortedPage(getHeaderPage().get_rootId().pid);
@@ -385,6 +390,8 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				newindexpage.setPrevPage(getHeaderPage().get_rootId());
 				updateHeader(newindexpage.getCurPage());
 			}
+			//unpin the page
+			unpinPage(headerPageId, true);
 		}
 	}
 
@@ -398,7 +405,11 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 	{
 		// [ASantra: 1/14/2024] Remove the return statement and start your code.
 
+		
+
 		BTSortedPage currentPage = new BTSortedPage(currentPageId,getHeaderPage().get_keyType());
+		//pin the page here
+		pinPage(currentPageId);
 		if (currentPage.getType() == NodeType.LEAF){
 			BTLeafPage leafpage = new BTLeafPage(currentPageId,getHeaderPage().get_keyType());
 			if (leafpage.available_space() > BT.getKeyDataLength(key,NodeType.LEAF)){			
@@ -452,11 +463,17 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		else if (currentPage.getType() == NodeType.INDEX){
 			BTIndexPage indexpage = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
 			KeyDataEntry curEntry = _insert(key,rid,indexpage.getPageNoByKey(key));
+			//unpin the page
+			unpinPage(currentPageId);
 			if (curEntry == null){
+				//pin the page
+				pinPage(currentPageId);
 				return null;
 			}
 			if (indexpage.available_space() > BT.getKeyDataLength(key,NodeType.INDEX)){			
 				indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+				//unpin
+				unpinPage(currentPageId, true);
 				return null;
 			}
 			else {
@@ -488,9 +505,13 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					System.out.println("Invalid key");
 				}
 
+				//unpin current Index Page
+				unpinPage(currentPageId, true);
 				curEntry = newindexPage.getFirst(new RID());
 				newindexPage.setPrevPage( ((IndexData)curEntry.data).getData());
 	  			newindexPage.deleteSortedRecord(new RID());
+				//unpin newindexPage
+				unpinPage(currentPageId, true);
 				return curEntry; 		
 			}
 		}
@@ -498,9 +519,12 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			System.out.println("Wrong node type");
 			return null;
 		}
-				
 		
 	}
+	
+				
+		
+	
 
 
 	

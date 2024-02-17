@@ -5,7 +5,9 @@ ASSIGNMENT=btree_project_spring_24
 
 #change the ASSIGN path to the path where you have downloaded on your computer
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-ROOT_DIR := $(shell echo $(ROOT_DIR) | sed 's|\(.*\)btree_project_spring_24/.*|\1|')
+ROOT_DIR := $(shell echo $(ROOT_DIR) //| sed 's|\(.*\)btree_project_spring_24/.*|\1|')
+
+#ROOT_DIR := /C:\\Users\\Muna Bhattarai\\Downloads\\DBMS-5331
 
 ASSIGN=$(ROOT_DIR)
 
