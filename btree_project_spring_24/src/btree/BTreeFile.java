@@ -741,23 +741,40 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			PinPageException, IndexSearchException, IteratorException {
             
             // [ASantra: 1/14/2024] Remove the return statement and start your code.
-
-			// boolean check = true;
-			// while (check){
-			// 	BTLeafPage leafpage = findRunStart(key,rid);
-			// 	if (leafpage == null){
-			// 		System.out.println("Key not found.");
-			// 		check = false;
-			// 	}
-			// 	else{
-			// 		leafpage.delEntry(key,rid);
-			// 	}
-					
-
-			// } 
+			BTLeafPage leafpage = findRunStart(key,new RID());
+			if (leafpage == null){
+				System.out.println("Leafpage null");
+				return false;
+			}
+			KeyDataEntry entry = leafpage.getCurrent(new RID());
+			while (true){
+				System.out.println("i am inside 1st loop");
+				while (entry != null){
+					System.out.println("i am inside 2nd loop");
+					PageId nextpage = leafpage.getNextPage();
+					if (nextpage.pid == INVALID_PAGE){
+						System.out.println("found invalid page");
+						return false;
+					} 
+					leafpage = new BTLeafPage(nextpage,getHeaderPage().get_keyType());
+					entry = leafpage.getFirst(new RID());
+					System.out.println(entry.key);
+					if (BT.keyCompare(key,entry.key)> 0){
+						break;
+					}
+					if( leafpage.delEntry(new KeyDataEntry(key, rid)) ==true) {
+						return true;
+					}
+					nextpage = leafpage.getNextPage();
+					leafpage = new BTLeafPage(nextpage,getHeaderPage().get_keyType());
+					entry = leafpage.getFirst(new RID());
+					return false;
+				}
+				
+			} 
 			
-            // return check;
-			return false;
+			
+            
 
 	}
 	/**
