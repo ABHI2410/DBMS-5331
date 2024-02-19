@@ -517,19 +517,18 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					newindexPage.deleteSortedRecord(new RID());
 
 				}
-				// if (BT.keyCompare(key,finalEntry.key)<0){
-				// 	if (indexpage.available_space()<newindexPage.available_space()){
-				// 		newindexPage.insertKey(finalEntry.key, ((IndexData)finalEntry.data).getData());
-				// 		indexpage.deleteSortedRecord(new RID(indexpage.getCurPage(),(int)indexpage.getSlotCnt()-1));
-				// 	}
-				// }
-				
+
+				if (indexpage.available_space()<newindexPage.available_space()){
+					newindexPage.insertKey(finalEntry.key, ((IndexData)finalEntry.data).getData());
+					indexpage.deleteSortedRecord(new RID(indexpage.getCurPage(),(int)indexpage.getSlotCnt()-1));
+				}
+
 				KeyDataEntry entry = newindexPage.getFirst(new RID()); 
 				if(BT.keyCompare(entry.key,curEntry.key)<0){
-					indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+					newindexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
 				}
 				else if (BT.keyCompare(entry.key,curEntry.key)>=0){
-					newindexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+					indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
 				}
 				else {
 					System.out.println("Invalid key");
@@ -542,7 +541,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 	  			newindexPage.deleteSortedRecord(new RID());
 				//unpin newindexPage
 				unpinPage(newindexPage.getCurPage(), true);
-				return curEntry; 		
+				return new KeyDataEntry(curEntry.key,newindexPage.getCurPage()); 		
 			}
 		}
 		else{
@@ -771,19 +770,19 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			PinPageException, IndexSearchException, IteratorException {
             
             // [ASantra: 1/14/2024] Remove the return statement and start your code.
+			boolean check = true;
 			BTLeafPage leafpage = findRunStart(key,new RID());
-			boolean check;
-			if (leafpage == null){
-				System.out.println("Leafpage null");
-				return false;
+			while (check == true){
+				if (leafpage == null){
+					System.out.println("Leafpage null");
+					check = false;
+				}
+				else {
+					check = leafpage.delEntry(new KeyDataEntry(key, rid));
+					unpinPage(leafpage.getCurPage(),true);
+				}
 			}
-			else {
-				check = leafpage.delEntry(new KeyDataEntry(key, rid));
-				unpinPage(leafpage.getCurPage(),true);
-				return check;
-			}
-			
-
+			return false;
 	}
 	/**
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
