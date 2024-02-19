@@ -412,7 +412,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		pinPage(currentPageId);
 		if (currentPage.getType() == NodeType.LEAF){
 			BTLeafPage leafpage = new BTLeafPage(currentPageId,getHeaderPage().get_keyType());
-			if (leafpage.available_space() > BT.getKeyDataLength(key,NodeType.LEAF)){			
+			if (leafpage.available_space() >= BT.getKeyDataLength(key,NodeType.LEAF)){// if was only > before but in the algorithm its >=			
 				leafpage.insertRecord(key,rid);
 				return null;
 			}
@@ -470,7 +470,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				pinPage(currentPageId);
 				return null;
 			}
-			if (indexpage.available_space() > BT.getKeyDataLength(key,NodeType.INDEX)){			
+			if (indexpage.available_space() >= BT.getKeyDataLength(key,NodeType.INDEX)){// if was only > before but in the algorithm its >=						
 				indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
 				//unpin
 				unpinPage(currentPageId, true);
@@ -759,6 +759,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					leafpage = new BTLeafPage(nextpage,getHeaderPage().get_keyType());
 					entry = leafpage.getFirst(new RID());
 					System.out.println(entry.key);
+				}// brought this statements outside the 1st loop
 					if (BT.keyCompare(key,entry.key)> 0){
 						break;
 					}
@@ -767,14 +768,10 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					}
 					nextpage = leafpage.getNextPage();
 					leafpage = new BTLeafPage(nextpage,getHeaderPage().get_keyType());
-					entry = leafpage.getFirst(new RID());
-					return false;
-				}
-				
-			} 
-			
-			
-            
+					entry = leafpage.getFirst(new RID());					
+				}	
+
+	return false;// brought this statement outside both the loops
 
 	}
 	/**
