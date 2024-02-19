@@ -445,11 +445,11 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				
 
 				KeyDataEntry entry = newleafPage.getFirst(new RID()); 
-				if(BT.keyCompare(entry.key,key)<0){
-					newleafPage.insertRecord(key,rid);
+				if(BT.keyCompare(entry.key,key)<0){// Accoring to the algorithm if the compare value is negative insert goes into the same leafpage
+					leafPage.insertRecord(key,rid);
 				}
-				else if (BT.keyCompare(entry.key,key)>=0){
-					leafpage.insertRecord(key,rid);
+				else if (BT.keyCompare(entry.key,key)>=0){//Accoring to the algorithm if the compare value is positive insert goes into the new leafpage
+					newleafpage.insertRecord(key,rid);
 				}
 				else {
 					System.out.println("Invalid key");
