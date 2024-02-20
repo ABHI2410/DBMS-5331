@@ -490,7 +490,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			// BT.getKeyDataLength(key,node_type) BT class function returns space required for the key to be stored in the type of node
 			if (leafPage.available_space() >= BT.getKeyDataLength(key,NodeType.LEAF)){	//avaiable_space() inhertied form HFPage returns space as int
 				// insert the record		
-				leafpage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
+				leafPage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
 				// unpin the page and set the dirty bit as changes are made
 				unpinPage(leafPage.getCurPage(),true); // class function non return type
 				// As there was space in the node and there was no need to split the parent node so return null
@@ -520,16 +520,16 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				// fetch first recored from leafPage and insert it into newLeafPage and delete from leafPage do for all records
 				for (i = 0; i<slotCount;i++){
 					// get first record
-					keyData= leafPage.getCurrent(new RID());// 
-					newLeafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());
-					leafPage.deleteSortedRecord(new RID());
+					keyData= leafPage.getCurrent(new RID());// BTLeafPage class funciton return KeyDataEntry
+					newLeafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());// BTLeafPage class function returns KeyDataEntry
+					leafPage.deleteSortedRecord(new RID()); // inherited from BTSortedPage
 
 				}
 			
 				for (i = 0; newLeafPage.available_space()<leafPage.available_space();i++){
-					KeyDataEntry keyData = newLeafPage.getCurrent(new RID());
+					keyData = newLeafPage.getCurrent(new RID());
 					finalEntry = keyData;
-					leafpage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());
+					leafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());
 					newLeafPage.deleteSortedRecord(new RID());
 
 				}
@@ -570,17 +570,17 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				return null;
 			}
 			else {
-				KeyDataEntry finalEntry = null;
+				finalEntry = null;
 				BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
 				int slotcout = indexpage.getSlotCnt();
-				for (int i = 0; i<slotcout;i++){
+				for (i = 0; i<slotcout;i++){
 					KeyDataEntry key_data = indexpage.getFirst(new RID());
 					newindexPage.insertKey(key_data.key,((IndexData)key_data.data).getData());
 					currentPage.deleteSortedRecord(new RID());
 
 				}
 			
-				for (int i = 0; currentPage.available_space()>newindexPage.available_space();i++){
+				for (i = 0; currentPage.available_space()>newindexPage.available_space();i++){
 					KeyDataEntry key_data = newindexPage.getFirst(new RID());
 					finalEntry = key_data;
 					indexpage.insertKey(key_data.key,((IndexData)key_data.data).getData());
