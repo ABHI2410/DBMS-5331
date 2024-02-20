@@ -913,23 +913,32 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 	private boolean NaiveDelete(KeyClass key, RID rid)
 			throws LeafDeleteException, KeyNotMatchException, PinPageException,
 			ConstructPageException, IOException, UnpinPageException,
-			PinPageException, IndexSearchException, IteratorException {
-            
-			boolean check = true;
-			BTLeafPage leafpage = findRunStart(key,new RID());
-			while (check == true){
-				if (leafpage == null){
+			PinPageException, IndexSearchException, IteratorException {)// This function deletes a record including duplicates or 
+			//it deletes a range of records. It has a return type boolean but it doesn't matter what it returns as we need this function just to delete the record. 
+            boolean check = true;/* A boolean variable to check if the leafPage where we are searching 
+			for the record is null or not */
+			BTLeafPage leafPage = findRunStart(key,new RID());/* Get the leafPage with the first
+			occurence of the key for which the record is to be deleted.
+			FindRunStart has a return value of leafPage which is an object of BTLeaf class
+			 */
+
+			while (check == true){/* Checks if there are more pages available to check for the record to be deleted*/
+				if (leafPage == null){/* If we have checked all the leafPages having the same key as the record to be deleted then leafPage reaches null */
 					System.out.println("Record not found");
-					check = false;
+					check = false;/* Make check as false to come out of the loop*/
 				}
 				else {
-					check = leafpage.delEntry(new KeyDataEntry(key, rid));
+					pinPage(leafPage.getCurPage());// Pin the page as we are using it to check for the record to be deleted
+					check = leafPage.delEntry(new KeyDataEntry(key, rid));// Checks if the record is present on the given leafPage and if it is present 
+					//delEntry deletes it and returns true else it will return false as the recordis not presnt
+
 					if (check == true){
-						unpinPage(leafpage.getCurPage(),true);
+						unpinPage(leafPage.getCurPage(),true);// unpin the leafPage as the recorded is deleted and now the leafPage is not needed 
 					}
 						
 					else{
-						System.out.println("Record not found or the record was already deleted.");
+						System.out.println("Record not found or the record was already deleted.");/* Control comes here when we are trying to delete a record which doesn't exist 
+						or is already deleted */
 					} 
 						
 				}
