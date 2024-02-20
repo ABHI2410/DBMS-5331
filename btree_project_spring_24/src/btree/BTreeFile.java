@@ -456,9 +456,13 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		BTLeafPage newLeafPage = null;
 		BTLeafPage rightPage = null;
 		KeyDataEntry finalEntry = null;
+		BTIndexPage indexPage = null;
+		BTIndexPage newIndexPage = null;
 		int slotCount;
 		int i;
 		KeyDataEntry keyData = null;
+		KeyDataEntry curEntry = null;
+		KeyDataEntry entry = null;
 		//pin the page
 		pinPage(currentPageId); //class function return Page
 		//Create an instance of BTSortedPage as we dont know what type of node (leaf or index) we are at 
@@ -560,88 +564,134 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 
 				}
 			
-
-				if(BT.keyCompare(finalEntry.key,key)<0){// Accoring to the algorithm if the compare value is negative insert goes into the same leafpage
-					newLeafPage.insertRecord(key,rid);
+				//Assertion: check the current key with final key entry if it is less than add to the left side
+				//			  if it is more than or equal to add to the rightside 
+				if(BT.keyCompare(finalEntry.key,key)<0){// BT.keyCompare() compare the key and return +ve, -ve or 0 integer based on key values
+					newLeafPage.insertRecord(key,rid); // insert the record in the newLeafNode as the key is greater then the final key value
 				}
-				else if (BT.keyCompare(finalEntry.key,key)>=0){//Accoring to the algorithm if the compare value is positive insert goes into the new leafpage
-					leafPage.insertRecord(key,rid);
+				else if (BT.keyCompare(finalEntry.key,key)>=0){ // BT.keyCompare() compare the key and return +ve, -ve or 0 integer based on key values
+					leafPage.insertRecord(key,rid); // insert the record in the newLeafNode as the key i less then or equal the final key value
 				}
 				else {
-					System.out.println("Invalid key");
+					System.out.println("Invalid key"); // key doesnt belong to either node
+					return null;
 				}
-				unpinPage(leafPage.getCurPage(),true);
-				unpinPage(newLeafPage.getCurPage(),true);
-				return new KeyDataEntry(newLeafPage.getFirst(new RID()).key,newLeafPage.getCurPage());		
-				
-				
+				// unpin both pages
+				unpinPage(leafPage.getCurPage(),true); // class function non return type
+				unpinPage(newLeafPage.getCurPage(),true); // class fucntion non return type
+				return new KeyDataEntry(newLeafPage.getFirst(new RID()).key,newLeafPage.getCurPage());	// copy up the first value of the newLeafPage	
 			}
 		}
-		else if (currentPage.getType() == NodeType.INDEX){
-			BTIndexPage indexpage = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
-			//unpin the page 
+		// None leaf node was found we need to recursivly travse
+		else if (currentPage.getType() == NodeType.INDEX){ // check if the page is and index page or not
+			try {
+				// initialize the BTIndexPage to access its fucntion
+				indexPage = new BTIndexPage(currentPage, getHeaderPage().get_keyType());
+			}
+			catch (ConstructPageException e){
+				e.printStackTrace();
+				System.out.println("The DB is full cant insert more records");
+			}
+			
+			//unpin the page dont set the dirty bit as no changes have been made.
 			unpinPage(currentPageId);
-			KeyDataEntry curEntry = _insert(key,rid,indexpage.getPageNoByKey(key));
+			// recursively call _insert(key,rid,PageId) untill you reach leaf node.
+			curEntry = _insert(key,rid,indexPage.getPageNoByKey(key)); // BTIndexPage class function returns PageId
 			
-			
+			// Assertion: if curEntry is null no split happend and no changes are needed so return null
 			if (curEntry == null){
 				return null;
 			}
-			pinPage(currentPageId);
-			indexpage = new BTIndexPage(currentPageId,getHeaderPage().get_keyType());
-			if (indexpage.available_space() >= BT.getKeyDataLength(key,NodeType.INDEX)){// if was only > before but in the algorithm its >=						
-				indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
-				//unpin
-				unpinPage(currentPageId, true);
-				return null;
+			// split occured and need to add the value is to be added
+			// pin the page that needs to change
+			pinPage(currentPageId); // class fucntion returns PageId
+			//create the instance of the BTIndexPage to access its function
+			try{
+				indexPage = new BTIndexPage(currentPageId,getHeaderPage().get_keyType());
 			}
+			catch (ConstructPageException e){
+				e.printStackTrace();
+				System.out.println("The DB is full cant insert more records");
+			}
+			//Assertion : check for space if you can insert in the index node if not then split
+			if (indexPage.available_space() >= BT.getKeyDataLength(key,NodeType.INDEX)){	
+				//Space is enough to add an entry so just insert				
+				indexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData()); // BTIndexPage class function returns RID of the inserted record
+				//unpin the page and set the dirt bit
+				unpinPage(currentPageId, true); // class function non return type
+				return null; // return null as no split happened 
+			}
+			// we dont have enough space need to split
 			else {
 				finalEntry = null;
-				BTIndexPage newindexPage = new BTIndexPage(getHeaderPage().get_keyType());
-				int slotcout = indexpage.getSlotCnt();
-				for (i = 0; i<slotcout;i++){
-					KeyDataEntry key_data = indexpage.getFirst(new RID());
-					newindexPage.insertKey(key_data.key,((IndexData)key_data.data).getData());
-					currentPage.deleteSortedRecord(new RID());
+				try{
+					// create a new BTIndexPage to split the entries
+					newIndexPage = new BTIndexPage(getHeaderPage().get_keyType());
+				}catch (ConstructPageException e){
+					e.printStackTrace();
+					System.out.println("The DB is full cant insert more records");
+				}
+				// get the number of slots 
+				slotCount = indexPage.getSlotCnt(); // inherited from HFPage class returns number of slots in short data type
+				// iterate till all the entries from the indexPage are moved to the newIndexPage
+				for (i = 0; i<slotCount;i++){
+					// get the first record
+					keyData = indexPage.getFirst(new RID()); // BTIndexPage class fucntion return first record in the indexPage
+					// insert the record in the newIndexPage
+					newIndexPage.insertKey(keyData.key,((IndexData)keyData.data).getData()); // BTIndexPage class function
+					// delete the record from the indexPage
+					indexPage.deleteSortedRecord(new RID()); // inherited from the BTSortedPage class
 
 				}
-			
-				for (i = 0; currentPage.available_space()>newindexPage.available_space();i++){
-					KeyDataEntry key_data = newindexPage.getFirst(new RID());
-					finalEntry = key_data;
-					indexpage.insertKey(key_data.key,((IndexData)key_data.data).getData());
-					newindexPage.deleteSortedRecord(new RID());
+				// try to make eqaul split with half the values in each node
+				for (i = 0; indexPage.available_space()>newIndexPage.available_space();i++){ //avaiable_space() inhertied form HFPage returns space as int
+					// get the first record
+					keyData = newIndexPage.getFirst(new RID()); // BTIndexPage class fucntion return first record in the indexPage
+					// copy the entry 
+					finalEntry = keyData;
+					// insert the record in the indexPage
+					indexPage.insertKey(keyData.key,((IndexData)keyData.data).getData()); // BTIndexPage class function
+					// delete the record from the newIndexPage
+					newIndexPage.deleteSortedRecord(new RID()); // inherited from the BTSortedPage class
 
 				}
-
-				if (indexpage.available_space()<newindexPage.available_space()){
-					newindexPage.insertKey(finalEntry.key, ((IndexData)finalEntry.data).getData());
-					indexpage.deleteSortedRecord(new RID(indexpage.getCurPage(),(int)indexpage.getSlotCnt()-1));
+				// check for even split if not move the last entry from indexPage to newIndexPage
+				if (indexPage.available_space()<newIndexPage.available_space()){
+					// insert the record in the newIndexPage
+					newIndexPage.insertKey(finalEntry.key, ((IndexData)finalEntry.data).getData()); // BTIndexPage class function
+					// delete the record in the indexPage
+					indexPage.deleteSortedRecord(new RID(indexPage.getCurPage(),(int)indexPage.getSlotCnt()-1)); // inherited from the BTSortedPage class
 				}
-
-				KeyDataEntry entry = newindexPage.getFirst(new RID()); 
-				if(BT.keyCompare(entry.key,curEntry.key)<0){
-					newindexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+				// get the first entry of the newIndexPage node for comparison
+				entry = newIndexPage.getFirst(new RID());  // BTIndexPage class function returns first data record as KeyDataEntry
+				// if the first entry is greater than or equal to the current key that needs to inserted add to newIndexPage
+				if(BT.keyCompare(entry.key,curEntry.key)<=0){ // BT.keyCompare() compare the key and return +ve, -ve or 0 integer based on key values
+					newIndexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData()); // BTIndexPage class fucntion returns RID of the inserted record
 				}
-				else if (BT.keyCompare(entry.key,curEntry.key)>=0){
-					indexpage.insertKey(curEntry.key,((IndexData)curEntry.data).getData());
+				// if the first entry is less than the current key that needs to inserted add to newIndexPage
+				else if (BT.keyCompare(entry.key,curEntry.key)>0){ // BT.keyCompare() compare the key and return +ve, -ve or 0 integer based on key values
+					indexPage.insertKey(curEntry.key,((IndexData)curEntry.data).getData()); // BTIndexPage class fucntion returns RID of the inserted record
 				}
 				else {
-					System.out.println("Invalid key");
+					System.out.println("Invalid key"); // recored doesnt belong to either node
+					return null;
 				}
 
-				//unpin current Index Page
-				unpinPage(indexpage.getCurPage(), true);
-				curEntry = newindexPage.getFirst(new RID());
-				newindexPage.setPrevPage( ((IndexData)curEntry.data).getData());
-	  			newindexPage.deleteSortedRecord(new RID());
-				//unpin newindexPage
-				unpinPage(newindexPage.getCurPage(), true);
-				return new KeyDataEntry(curEntry.key,newindexPage.getCurPage()); 		
+				//unpin currentIndexPage and set the dirty bit as changes are made
+				unpinPage(indexPage.getCurPage(), true); // class fucntion non return type
+				// need to copy up the first value and remove it form the newIndexPage
+				curEntry = newIndexPage.getFirst(new RID()); // BTIndexPage class function returns KeyDataEntry of first record
+				newIndexPage.setPrevPage( ((IndexData)curEntry.data).getData()); // set the previous page to approriate pointer
+	  			newIndexPage.deleteSortedRecord(new RID());
+				//unpin newIndexPage and set the dirty bit as changes are made
+				unpinPage(newIndexPage.getCurPage(), true); // class fucntion non return type
+				return new KeyDataEntry(curEntry.key,newIndexPage.getCurPage()); // return KeyDataEntry to update the parent node
 			}
 		}
 		else{
+			// node is neither leaf nor index so need to throw the error
 			System.out.println("Wrong node type");
+			throw new  NodeNotMatchException(null,'');
 			return null;
 		}
 		
