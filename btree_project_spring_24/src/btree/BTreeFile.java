@@ -369,7 +369,8 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			IteratorException, LeafDeleteException, InsertException,
 			IOException
 
-	{		
+	{	
+		
 		//Declare function variables
 		KeyDataEntry header;
 		BTLeafPage newLeafPage;
@@ -379,78 +380,65 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		//Assertions: if the key length is greater than the max key size set in header
 		//				throw error and stop else continue
 		if (BT.getKeyLength(key) > headerPage.get_maxKeySize()){
-			throw new KeyTooLongException();
-		}
-
-		//Check for key type
-		//Assertions : if key is StringKey and header key attribute type declared not String
-		//             throw error else let the program
-		if (key instanceof StringKey){
-			if (headerPage.get_keyType() != AttrType.attrString){
-				throw new KeyNotMatchException();
-			}
+			throw new KeyTooLongException(null, "");
 		}
 
 		//Assertions : if key is IntegerKey and header key attribute type declared not Integer
 		//             throw error else let the program
-		else if (key instanceof IntegerKey){
-			if (headerPage.get_keyType() != AttrType.attrInteger){
-				throw new KeyNotMatchException();
+		if (key instanceof IntegerKey){
+				
+			//Assertios: Check for header page being not valid
+			//			 if not vaild create a new (Leaf) Page
+			//           and insert the entry else call _insert() 
+			if (getHeaderPage().get_rootId().pid == INVALID_PAGE){
+
+				//Create a new (Leaf) Page 
+				newLeafPage = new BTLeafPage(getHeaderPage().get_keyType());
+						
+				//pin the page
+				pinPage(newLeafPage.getCurPage()); // class function returns Page 
+
+				//Set next and previous page pointers
+				newLeafPage.setNextPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class non-return type function
+				newLeafPage.setPrevPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class non return type fucntion
+
+				//insert the record
+				newLeafPage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
+
+				// unpin the page and set the dirty bit as changes have been made
+				unpinPage(newLeafPage.getCurPage(), true); // class function non return type function 
+
+				//change the header to point to the new page
+				updateHeader(newLeafPage.getCurPage());// getCurPage() inherited from HFPage Class return page no as PageId		
+			}
+
+			else {
+				// fucntion call to _insert class fucntion to insert record
+				header = _insert(key,rid,getHeaderPage().get_rootId()); // class function return KeyDataEntry
+
+				// Assertion : if the retured value to the header is not null that means the split
+				//			   moved up till the root node and root was split. need to create a new
+				//			   root node and manage pointers.
+				if (header != null){
+
+					//Create a new (Index) Page
+					newIndexPage = new BTIndexPage(getHeaderPage().get_keyType());
+					
+					//pin the page
+					pinPage(newIndexPage.getCurPage()); //class function returns Page
+					// Insert in to the new index node and set previous page to the old root
+					newIndexPage.insertKey(header.key,((IndexData)(header.data)).getData()); // BTIndexPage class fuction returns RID of the inserted key
+					newIndexPage.setPrevPage(getHeaderPage().get_rootId()); // inherited from HFPage Class non return type fucntion
+					//unpin the page and set the dirty bit as changes have been made
+					unpinPage(newIndexPage.getCurPage(), true); //class function non return type function 
+					//change the header to point to the new page
+					updateHeader(newIndexPage.getCurPage()); // getCurPage() inherited from HFPage Class return page no as PageId	
+				}
 			}
 		}
-
 		//Assertions: if any other key Atrribute type throw error
 		else {
-			throw new KeyNotMatchException();
-		}
-		
-		//Assertios: Check for header page being not valid
-		//			 if not vaild create a new (Leaf) Page
-		//           and insert the entry else call _insert() 
-		if (getHeaderPage().get_rootId().pid == INVALID_PAGE){
-
-			//Create a new (Leaf) Page 
-			newLeafPage = new BTLeafPage(getHeaderPage().get_keyType());
-					
-			//pin the page
-			pinPage(newLeafPage.getCurPage()); // class function returns Page 
-
-			//Set next and previous page pointers
-			newLeafPage.setNextPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class non-return type function
-			newLeafPage.setPrevPage(new PageId(INVALID_PAGE)); // inherited from HFPage Class non return type fucntion
-
-			//insert the record
-			newLeafPage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
-
-			// unpin the page and set the dirty bit as changes have been made
-			unpinPage(newLeafPage.getCurPage(), true); // class function non return type function 
-
-			//change the header to point to the new page
-			updateHeader(newLeafPage.getCurPage());// getCurPage() inherited from HFPage Class return page no as PageId		
-		}
-
-		else {
-			// fucntion call to _insert class fucntion to insert record
-			header = _insert(key,rid,getHeaderPage().get_rootId()); // class function return KeyDataEntry
-
-			// Assertion : if the retured value to the header is not null that means the split
-			//			   moved up till the root node and root was split. need to create a new
-			//			   root node and manage pointers.
-			if (header != null){
-
-				//Create a new (Index) Page
-				newIndexPage = new BTIndexPage(getHeaderPage().get_keyType());
-				
-				//pin the page
-				pinPage(newIndexPage.getCurPage()); //class function returns Page
-				// Insert in to the new index node and set previous page to the old root
-				newIndexPage.insertKey(header.key,((IndexData)(header.data)).getData()); // BTIndexPage class fuction returns RID of the inserted key
-				newIndexPage.setPrevPage(getHeaderPage().get_rootId()); // inherited from HFPage Class non return type fucntion
-				//unpin the page and set the dirty bit as changes have been made
-				unpinPage(newIndexPage.getCurPage(), true); //class function non return type function 
-				//change the header to point to the new page
-				updateHeader(newIndexPage.getCurPage()); // getCurPage() inherited from HFPage Class return page no as PageId	
-			}
+			throw new KeyNotMatchException(null, "");
 		}
 	}
 
@@ -463,10 +451,10 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 
 	{
 		//Decaler function variables 
-		BTSortedPage currentPage;
-		BTLeafPage leafPage;
-		BTLeafPage newLeafPage;
-		BTLeafPage rightPage;
+		BTSortedPage currentPage = null;
+		BTLeafPage leafPage = null;
+		BTLeafPage newLeafPage = null;
+		BTLeafPage rightPage = null;
 		KeyDataEntry finalEntry = null;
 		int slotCount;
 		int i;
@@ -474,23 +462,45 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 		//pin the page
 		pinPage(currentPageId); //class function return Page
 		//Create an instance of BTSortedPage as we dont know what type of node (leaf or index) we are at 
-		currentPage = new BTSortedPage(currentPageId,getHeaderPage().get_keyType());
-
+		try{
+			currentPage = new BTSortedPage(currentPageId,getHeaderPage().get_keyType());
+		}
+		catch (ConstructPageException e){
+			e.printStackTrace();
+			System.out.println("The DB is full cant insert more records");
+		}
+		
 		// Assertions: Check for the node type
 		//				if Leaf: check for space and insert or split
 		//				if index: recursively travse till leaf node is found
 		// 				else: throw NodeNotMatch error
 		if (currentPage.getType() == NodeType.LEAF){
 			// Create an instance of BTLeafPage to access the fucntion of BTLeafPage
-			leafPage = new BTLeafPage(currentPageId,getHeaderPage().get_keyType());
+			try{
+				leafPage = new BTLeafPage(currentPageId,getHeaderPage().get_keyType());
+			}
+			catch (ConstructPageException e){
+				e.printStackTrace();
+				System.out.println("The DB is full cant insert more records");
+			}
 
 			//Assertions: if the avaiable space in the leafpage is more than the current key length
 			// 				insert the key in to the leaf page else split.
 
 			// BT.getKeyDataLength(key,node_type) BT class function returns space required for the key to be stored in the type of node
 			if (leafPage.available_space() >= BT.getKeyDataLength(key,NodeType.LEAF)){	//avaiable_space() inhertied form HFPage returns space as int
-				// insert the record		
-				leafPage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
+				
+				try{
+					// insert the record
+					leafPage.insertRecord(key,rid); // BTLeafPage class function  returns rid of the inserted record as RID
+				}	
+				catch (Exception e){
+					// e.printStackTrace();
+					System.out.println("The DB is full cant insert more records");
+					return null; 
+				}	
+				
+				
 				// unpin the page and set the dirty bit as changes are made
 				unpinPage(leafPage.getCurPage(),true); // class function non return type
 				// As there was space in the node and there was no need to split the parent node so return null
@@ -499,7 +509,13 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			// Space was not enough perform split
 			else {
 				// Create a new (Leaf) Page 
-				newLeafPage = new BTLeafPage(getHeaderPage().get_keyType());
+				try {
+					newLeafPage = new BTLeafPage(getHeaderPage().get_keyType());
+				}
+				catch (ConstructPageException e){
+					e.printStackTrace();
+					System.out.println("The DB is full cant insert more records");
+				}
 				//Set next and previous page pointers
 				newLeafPage.setNextPage(leafPage.getNextPage()); // inherited from HFPage Class non-return type function
 				newLeafPage.setPrevPage(leafPage.getCurPage()); // inherited from HFPage Class non-return type function
@@ -509,7 +525,13 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					//pin the page
 					pinPage(newLeafPage.getNextPage()); // class function returns Page
 					// Create the instance of BTLeafPage to access BTLeafPage fucntions
-					rightPage = new BTLeafPage(newLeafPage.getNextPage(), getHeaderPage().get_keyType());
+					try{
+						rightPage = new BTLeafPage(newLeafPage.getNextPage(), getHeaderPage().get_keyType());
+					}
+					catch (ConstructPageException e){
+						e.printStackTrace();
+						System.out.println("The DB is full cant insert more records");
+					}
 					// set the previous page pointer to the newLeafPage
 					rightPage.setPrevPage(newLeafPage.getCurPage()); // inherited from HFPage Class non-return type function
 					// unpin the right page and set the dirty bit as changes have been made
@@ -525,12 +547,16 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 					leafPage.deleteSortedRecord(new RID()); // inherited from BTSortedPage
 
 				}
-			
-				for (i = 0; newLeafPage.available_space()<leafPage.available_space();i++){
-					keyData = newLeafPage.getCurrent(new RID());
-					finalEntry = keyData;
-					leafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());
-					newLeafPage.deleteSortedRecord(new RID());
+				//Assertions: leafPage is empty newLeafPage is completely filled
+				//			  now transfer 1st half entires to leafPage
+				for (i = 0; newLeafPage.available_space()<leafPage.available_space();i++){ //avaiable_space() inhertied form HFPage returns space as int
+					//get the first entry in the newLeafPage
+					keyData = newLeafPage.getCurrent(new RID()); //BTLeafPage class function return KeyDataEntry
+					finalEntry = keyData;	// save the final key to compare to add new value in the nodes
+					// insert the record
+					leafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData()); //BTLeafPage class function return RID of the inserted record
+					// delete the record from the newLeafPage
+					newLeafPage.deleteSortedRecord(new RID());// inherited from the BTSortedPage class non return type
 
 				}
 			
@@ -839,17 +865,23 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			ConstructPageException, IOException, UnpinPageException,
 			PinPageException, IndexSearchException, IteratorException {
             
-            // [ASantra: 1/14/2024] Remove the return statement and start your code.
 			boolean check = true;
 			BTLeafPage leafpage = findRunStart(key,new RID());
 			while (check == true){
 				if (leafpage == null){
-					System.out.println("Leafpage null");
+					System.out.println("Record not found");
 					check = false;
 				}
 				else {
 					check = leafpage.delEntry(new KeyDataEntry(key, rid));
-					unpinPage(leafpage.getCurPage(),true);
+					if (check == true){
+						unpinPage(leafpage.getCurPage(),true);
+					}
+						
+					else{
+						System.out.println("Record not found or the record was already deleted.");
+					} 
+						
 				}
 			}
 			return false;
