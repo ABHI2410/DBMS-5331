@@ -893,7 +893,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 			while (check == true){/* Checks if there are more pages available to check for the record to be deleted*/
 				if (leafPage == null){/* If we have checked all the leafPages having the same key as the record to be deleted then leafPage reaches null */
 					check = false;/* Make check as false to come out of the loop*/
-					System.out.println("No Instance of Record "+key+" found");
+					System.out.println("No Instance of Record "+key+" was found");
 				}
 				else {
 					pinPage(leafPage.getCurPage());// Pin the page as we are using it to check for the record to be deleted
@@ -905,14 +905,15 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 						System.out.println("Instance of Record "+key+" deleted successfully");
 					}
 					else {
-						unpinPage(leafPage.getCurPage(),true);
-						System.out.println("All Instances of Record "+key+" are deleted");
+						unpinPage(leafPage.getCurPage(),false);// unpin the leafpage as there was no change no need to set dirty bit
+						System.out.println("All Instances of Record "+key+" if existed are now deleted");
 					}
 						
 				}
 			}
 			
 			return true;
+
 	}
 	/**
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
