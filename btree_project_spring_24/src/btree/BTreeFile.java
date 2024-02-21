@@ -900,7 +900,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 
 					if (check == true){
 						unpinPage(leafPage.getCurPage(),true);// unpin the leafPage as the recorded is deleted and now the leafPage is not needed 
-						System.out.println("Instance of Record "+key+" deleted succufully");
+						System.out.println("Instance of Record "+key+" deleted successfully");
 					}
 						
 				}
