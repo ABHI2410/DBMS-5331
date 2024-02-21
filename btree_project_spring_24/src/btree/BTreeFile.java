@@ -522,7 +522,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				// fetch first recored from leafPage and insert it into newLeafPage and delete from leafPage do for all records
 				for (i = 0; i<slotCount;i++){
 					// get first record
-					keyData= leafPage.getCurrent(new RID());// BTLeafPage class funciton return KeyDataEntry
+					keyData= leafPage.getCurrent(new  RID());// BTLeafPage class funciton return KeyDataEntry
 					newLeafPage.insertRecord(keyData.key,((LeafData)(keyData.data)).getData());// BTLeafPage class function returns KeyDataEntry
 					leafPage.deleteSortedRecord(new RID()); // inherited from BTSortedPage
 
@@ -596,6 +596,8 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 				finalEntry = null;
 				// create a new BTIndexPage to split the entries
 				newIndexPage = new BTIndexPage(getHeaderPage().get_keyType());
+				pinPage(newIndexPage.getCurPage());
+				pinPage(indexPage.getCurPage());
 				// get the number of slots 
 				slotCount = indexPage.getSlotCnt(); // inherited from HFPage class returns number of slots in short data type
 				// iterate till all the entries from the indexPage are moved to the newIndexPage
@@ -903,13 +905,14 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 						System.out.println("Instance of Record "+key+" deleted successfully");
 					}
 					else {
+						unpinPage(leafPage.getCurPage(),true);
 						System.out.println("All Instances of Record "+key+" are deleted");
 					}
 						
 				}
 			}
 			
-			return false;
+			return true;
 	}
 	/**
 	 * create a scan with given keys Cases: (1) lo_key = null, hi_key = null
