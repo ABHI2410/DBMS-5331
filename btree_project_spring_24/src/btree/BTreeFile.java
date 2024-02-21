@@ -903,7 +903,7 @@ public class BTreeFile extends IndexFile implements GlobalConst {
 						System.out.println("Instance of Record "+key+" deleted successfully");
 					}
 					else {
-						System.out.pritln("All Instances of Record "+key+" are deleted");
+						System.out.println("All Instances of Record "+key+" are deleted");
 					}
 						
 				}
