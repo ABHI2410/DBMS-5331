@@ -107,6 +107,53 @@ void *readtx(void *arg)
   struct param *node = (struct param *)arg; // get tid and objno and count
   // need to impletemnt this            5 points
   // do the operations for reading. Write your code
+  start_operation(node->tid, node->count);
+  zgt_p(0);
+
+  zgt_tx *tx = get_tx(node->tid);
+
+  if (tx != NULL)
+  {
+    if (tx->status == TR_END)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_ABORT)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_WAIT)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_ACTIVE)
+    {
+      int count;
+      tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else
+    {
+      printf("Invaid Tx State");
+    }
+  }
+  else
+  {
+    printf("Trying to read from an invalid Tx");
+  }
+
+  return 0;
 }
 
 void *writetx(void *arg)
@@ -114,12 +161,170 @@ void *writetx(void *arg)
   struct param *node = (struct param *)arg; // struct parameter that contains
   // need to implement this               15 points
   // do the operations for writing; similar to readTx. Write your code
+  start_operation(node->tid, node->count);
+  zgt_p(0);
+
+  zgt_tx *tx = get_tx(node->tid);
+
+  if (tx != NULL)
+  {
+    if (tx->status == TR_END)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_ABORT)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_WAIT)
+    {
+      do_commit_abort_operation(tx->tid, tx->status);
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else if (tx->status == TR_ACTIVE)
+    {
+      int count;
+      tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'X');
+      zgt_v(0);
+      finish_operation(tx->tid);
+      pthread_exit(NULL);
+    }
+    else
+    {
+      printf("Invaid Tx State");
+    }
+  }
+  else
+  {
+    printf("Trying to read from an invalid Tx");
+  }
+
+  return 0;
 }
 
 // common method to process read/write: Just a suggestion
 
 void *process_read_write_operation(long tid, long obno, int count, char mode)
-{
+{                                           // do the operations for writing; similar to readTx
+  struct param *node = (struct param *)arg; // struct parameter that contains
+  // need to implement this               15 points
+  // do the operations for writing; similar to readTx. Write your code
+  start_operation(node->tid, node->count);
+  zgt_p(0);
+
+  zgt_tx *tx = get_tx(node->tid);
+  if (mode == 'r')
+  {
+    start_operation(node->tid, node->count);
+    zgt_p(0);
+
+    zgt_tx *tx = get_tx(node->tid);
+
+    if (tx != NULL)
+    {
+      if (tx->status == TR_END)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_ABORT)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_WAIT)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_ACTIVE)
+      {
+        int count;
+        tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else
+      {
+        printf("Invaid Tx State");
+      }
+    }
+    else
+    {
+      printf("Trying to read from an invalid Tx");
+    }
+
+    return 0;
+  }
+  else if (mode == 'w')
+  {
+    start_operation(node->tid, node->count);
+    zgt_p(0);
+
+    zgt_tx *tx = get_tx(node->tid);
+
+    if (tx != NULL)
+    {
+      if (tx->status == TR_END)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_ABORT)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_WAIT)
+      {
+        do_commit_abort_operation(tx->tid, tx->status);
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else if (tx->status == TR_ACTIVE)
+      {
+        int count;
+        tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+        zgt_v(0);
+        finish_operation(tx->tid);
+        pthread_exit(NULL);
+      }
+      else
+      {
+        printf("Invaid Tx State");
+      }
+    }
+    else
+    {
+      printf("Trying to read from an invalid Tx");
+    }
+
+    return 0;
+  }
+  else
+  {
+    printf("Invalid Mode");
+  }
 }
 
 void *aborttx(void *arg)
@@ -127,8 +332,22 @@ void *aborttx(void *arg)
   struct param *node = (struct param *)arg; // get tid and count
   // need to implement this                 5 points
   // write your code
+  start_operation(node->tid, node->count);
+  zgt_p(0);
 
-  pthread_exit(NULL); // thread exit
+  zgt_tx *tx = get_tx(node->tid);
+  if (tx != NULL)
+  {
+    do_commit_abort_operation(tx->tid, tx->status);
+    zgt_v(0);
+    finish_operation(tx->tid);
+    pthread_exit(NULL);
+  }
+  else
+  {
+    printf("Invalid Tx");
+    pthread_exit(NULL);
+  }
 }
 
 void *committx(void *arg)
@@ -138,7 +357,22 @@ void *committx(void *arg)
   struct param *node = (struct param *)arg; // get tid and count
 
   // write your code
-  pthread_exit(NULL); // thread exit
+  start_operation(node->tid, node->count);
+  zgt_p(0);
+
+  zgt_tx *tx = get_tx(node->tid);
+  if (tx != NULL)
+  {
+    do_commit_abort_operation(tx->tid, tx->status);
+    zgt_v(0);
+    finish_operation(tx->tid);
+    pthread_exit(NULL);
+  }
+  else
+  {
+    printf("Invalid Tx");
+    pthread_exit(NULL);
+  }
 }
 
 // suggestion as they are very similar
