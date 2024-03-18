@@ -116,29 +116,28 @@ void *readtx(void *arg)
   {
     if (tx->status == TR_END)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_END);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_ABORT)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_ABORT);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_WAIT)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_WAIT);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_ACTIVE)
     {
-      int count;
-      tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+      tx->set_lock(node->tid, node->obno, node->count, 'S');
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
@@ -170,29 +169,28 @@ void *writetx(void *arg)
   {
     if (tx->status == TR_END)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_END);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_ABORT)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_ABORT);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_WAIT)
     {
-      do_commit_abort_operation(tx->tid, tx->status);
+      do_commit_abort_operation(tx->tid, TR_WAIT);
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
     }
     else if (tx->status == TR_ACTIVE)
     {
-      int count;
-      tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'X');
+      tx->set_lock(node->tid, node->obno, node->count, 'X');
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
@@ -232,29 +230,28 @@ void *process_read_write_operation(long tid, long obno, int count, char mode)
     {
       if (tx->status == TR_END)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_END);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_ABORT)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_ABORT);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_WAIT)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_WAIT);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_ACTIVE)
       {
-        int count;
-        tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+        tx->set_lock(node->tid, node->obno, node->count, 'S');
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
@@ -282,29 +279,28 @@ void *process_read_write_operation(long tid, long obno, int count, char mode)
     {
       if (tx->status == TR_END)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_ABORT);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_ABORT)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_ABORT);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_WAIT)
       {
-        do_commit_abort_operation(tx->tid, tx->status);
+        do_commit_abort_operation(tx->tid, TR_WAIT);
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
       }
       else if (tx->status == TR_ACTIVE)
       {
-        int count;
-        tx->set_lock(tx->tid, tx->obno, tx->sgno, count, 'S');
+        tx->set_lock(node->tid, node->obno, node->count, 'S');
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
@@ -338,7 +334,7 @@ void *aborttx(void *arg)
   zgt_tx *tx = get_tx(node->tid);
   if (tx != NULL)
   {
-    do_commit_abort_operation(tx->tid, tx->status);
+    do_commit_abort_operation(tx->tid, TR_ABORT);
     zgt_v(0);
     finish_operation(tx->tid);
     pthread_exit(NULL);
@@ -363,7 +359,7 @@ void *committx(void *arg)
   zgt_tx *tx = get_tx(node->tid);
   if (tx != NULL)
   {
-    do_commit_abort_operation(tx->tid, tx->status);
+    do_commit_abort_operation(tx->tid, TR_END);
     zgt_v(0);
     finish_operation(tx->tid);
     pthread_exit(NULL);
@@ -383,8 +379,42 @@ void *committx(void *arg)
 
 void *do_commit_abort_operation(long t, char status)
 {
-
   // write your code
+  if (status == TR_ABORT)
+  {
+    printf("Abort Tx");
+  }
+  else if (status == TR_END)
+  {
+    printf("Commit Tx");
+  }
+  else
+  {
+    zgt_tx *tx = get_tx(t);
+    if (tx != NULL)
+    {
+      if (tx->status == TR_WAIT)
+      {
+        printf("Tx is in wait which is not an expected state.");
+      }
+      tx->status = status;
+      tx->free_locks();
+      int tx_waiting = tx->semno;
+      tx->remove_tx();
+      if (tx_waiting != -1)
+      {
+        int tx_to_release = zgt_nwait(tx_waiting);
+        for (int i = 1; i <= tx_to_release; i++)
+        {
+          zgt_v(tx_waiting);
+        }
+      }
+    }
+    else
+    {
+      printf("Tx does not exists");
+    }
+  }
 }
 
 int zgt_tx::remove_tx()
@@ -421,6 +451,46 @@ int zgt_tx::set_lock(long tid1, long sgno1, long obno1, int count, char lockmode
   // if successful  return(0); else -1
 
   // write your code
+  zgt_hlink *node, *node_tx, *temp;
+  zgt_tx *tx;
+  node = ZGT_Ht->find(sgno1, obno1);
+  tx = get_tx(tid1);
+  if (node == NULL)
+  {
+    ZGT_Ht->add(tx, sgno1, obno1, lockmode1);
+    perform_read_write_operation(tid1, obno1, lockmode1);
+    zgt_v(0);
+    return 0;
+  }
+  else
+  {
+    temp = ZGT_Ht->findt(this->tid,sgno1,obno1);
+    if (temp == NULL)
+    {
+      temp_tx = this->other_lock(node,sgno1,obno1);
+      if(temp_tx != NULL)
+      {
+        tx->status = TR_WAIT;
+        tx->lockemode = lockmode1;
+        tx->obno = obno1;
+        tx->setTx_semno(node_tx->tid,node_tx->tid);
+        zgt_v(0);
+        zgt_p(node_tx->tid);
+        tx->status = TR_ACTIVE;
+        zgt_p(0);
+        setlock(tx->tid,tx->sgno,tx->obno,count,tx->lockmode);
+      }
+      else
+      {
+        return 0;
+      }
+    }
+    status = TR_ACTIVE;
+    node->lockmode = lockmode1;
+    this->perform_read_write_operation(tid,obno1,lockmode1);
+    zgt_v(0);
+
+  }
 }
 
 int zgt_tx::free_locks()
@@ -552,6 +622,20 @@ void zgt_tx::perform_read_write_operation(long tid, long obno, char lockmode)
 {
 
   // write your code
+  int lock = ZGT_Sh->objarray[obno]->value;
+  if (lockmode == 'X') {
+			ZGT_Sh->objarray[obno]->value = lock + 1;
+			fprintf(logfile, "T%d\tWriteTx\t\t%d:%d:%d\t\t\t\tWriteLock\tGranted\t\t%c\n", this->tid,obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
+      printf("T%d\tWriteTx\t\t%d:%d:%d\t\t\t\tWriteLock\tGranted\t\t%c\n", this->tid,obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
+			fflush(logfile);
+		}
+
+		else if(lockmode == 'S'){
+			ZGT_Sh->objarray[obno]->value = lock - 1;
+			fprintf(logfile, "T%d\tReadTx\t\t%d:%d:%d\t\t\tReadLock\tGranted\t\t%c\n", this->tid,obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
+      printf("T%d\tReadTx\t\t%d:%d:%d\t\t\tReadLock\tGranted\t\t%c\n", this->tid,obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
+			fflush(logfile);
+		}
 }
 
 // routine that sets the semno in the Tx when another tx waits on it.
