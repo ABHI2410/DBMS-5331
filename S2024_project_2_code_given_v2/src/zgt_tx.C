@@ -123,8 +123,8 @@ void *readtx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "\tCant read commited Tx");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "\tCant read commited Tx");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_ABORT)
@@ -133,8 +133,8 @@ void *readtx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "\tCant read aborted Tx");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "\tCant read aborted Tx");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_WAIT)
@@ -143,14 +143,14 @@ void *readtx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tCant read Tx which is in waiting");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tCant read Tx which is in waiting");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_ACTIVE)
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tLooking for Lock Availability");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tLooking for Lock Availability");
       fflush(ZGT_Sh->logfile);
       tx->set_lock(node->tid, 1, node->obno, node->count, 'S');
       zgt_v(0);
@@ -159,16 +159,16 @@ void *readtx(void *arg)
     }
     else
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tInvalid Tx state");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tInvalid Tx state");
       fflush(ZGT_Sh->logfile);
       printf("Invaid Tx State");
     }
   }
   else
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-    fprintf(ZGT_Sh->logfile, "T\tTrying to read from an invalid Tx");
+    printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+    printf( "T\tTrying to read from an invalid Tx");
     fflush(ZGT_Sh->logfile);
     printf("Trying to read from an invalid Tx");
   }
@@ -183,7 +183,7 @@ void *writetx(void *arg)
   // do the operations for writing; similar to readTx. Write your code
   start_operation(node->tid, node->count);
   zgt_p(0);
-  fprintf(ZGT_Sh->logfile, "T%ld\t%c \t Tx Write Initiated\n", node->tid, node->Txtype); // Write log record and close
+  printf( "T%ld\t%c \t Tx Write Initiated\n", node->tid, node->Txtype); // Write log record and close
   fflush(ZGT_Sh->logfile);
   zgt_tx *tx = get_tx(node->tid);
 
@@ -195,8 +195,8 @@ void *writetx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "\tCant write commited Tx");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "\tCant write commited Tx");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_ABORT)
@@ -205,8 +205,8 @@ void *writetx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "\tCant write aborted Tx");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "\tCant write aborted Tx");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_WAIT)
@@ -215,14 +215,14 @@ void *writetx(void *arg)
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "\tCant write to Tx which is in waiting");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "\tCant write to Tx which is in waiting");
       fflush(ZGT_Sh->logfile);
     }
     else if (tx->status == TR_ACTIVE)
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tLooking for Lock Availability");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tLooking for Lock Availability");
       fflush(ZGT_Sh->logfile);
       tx->set_lock(node->tid, 1, node->obno, node->count, 'X');
       zgt_v(0);
@@ -231,16 +231,16 @@ void *writetx(void *arg)
     }
     else
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tInvalid Tx state");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tInvalid Tx state");
       fflush(ZGT_Sh->logfile);
       printf("Invaid Tx State");
     }
   }
   else
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-    fprintf(ZGT_Sh->logfile, "T\tTrying to read from an invalid Tx");
+    printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+    printf( "T\tTrying to read from an invalid Tx");
     fflush(ZGT_Sh->logfile);
     printf("Trying to read from an invalid Tx");
   }
@@ -375,7 +375,7 @@ void *aborttx(void *arg)
   // write your code
   start_operation(node->tid, node->count);
   zgt_p(0);
-  fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTx Abort Initiated\n", node->tid, node->Txtype); // Write log record and close
+  printf( "T%ld\t%c \tTx Abort Initiated\n", node->tid, node->Txtype); // Write log record and close
   fflush(ZGT_Sh->logfile);
   zgt_tx *tx = get_tx(node->tid);
   if (tx != NULL)
@@ -384,14 +384,14 @@ void *aborttx(void *arg)
     zgt_v(0);
     finish_operation(tx->tid);
     pthread_exit(NULL);
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTx Abort Finished\n", node->tid, node->Txtype); // Write log record and close
+    printf( "T%ld\t%c \tTx Abort Finished\n", node->tid, node->Txtype); // Write log record and close
     fflush(ZGT_Sh->logfile);
   }
   else
   {
     printf("Invalid Tx");
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-    fprintf(ZGT_Sh->logfile, "T\tTrying to abort an invalid Tx");
+    printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+    printf( "T\tTrying to abort an invalid Tx");
     fflush(ZGT_Sh->logfile);
     pthread_exit(NULL);
   }
@@ -402,7 +402,7 @@ void *committx(void *arg)
   // need to implement this                5 points
   // remove the locks/objects before committing
   struct param *node = (struct param *)arg;                                              // get tid and count
-  fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTx Commit Initiated\n", node->tid, node->Txtype); // Write log record and close
+  printf( "T%ld\t%c \tTx Commit Initiated\n", node->tid, node->Txtype); // Write log record and close
   fflush(ZGT_Sh->logfile);
   // write your code
   start_operation(node->tid, node->count);
@@ -415,13 +415,13 @@ void *committx(void *arg)
     zgt_v(0);
     finish_operation(tx->tid);
     pthread_exit(NULL);
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTx Commit Finished\n", node->tid, node->Txtype); // Write log record and close
+    printf( "T%ld\t%c \tTx Commit Finished\n", node->tid, node->Txtype); // Write log record and close
     fflush(ZGT_Sh->logfile);
   }
   else
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-    fprintf(ZGT_Sh->logfile, "T\tTrying to commit an invalid Tx");
+    printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+    printf( "T\tTrying to commit an invalid Tx");
     fflush(ZGT_Sh->logfile);
     printf("Invalid Tx");
     pthread_exit(NULL);
@@ -439,13 +439,13 @@ void *do_commit_abort_operation(long t, char status)
   // write your code
   if (status == TR_ABORT)
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t AbortTx\n", t); // Write log record and close
+    printf( "T%ld\t AbortTx\n", t); // Write log record and close
     fflush(ZGT_Sh->logfile);
     printf("Abort Tx");
   }
   else if (status == TR_END)
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t CommitTx\n", t); // Write log record and close
+    printf( "T%ld\t CommitTx\n", t); // Write log record and close
     fflush(ZGT_Sh->logfile);
     printf("Commit Tx");
   }
@@ -460,11 +460,11 @@ void *do_commit_abort_operation(long t, char status)
       }
       tx->status = status;
       tx->free_locks();
-      fprintf(ZGT_Sh->logfile, "T%ld\t FreedLocks\n", tx->tid); // Write log record and close
+      printf( "T%ld\t FreedLocks\n", tx->tid); // Write log record and close
       fflush(ZGT_Sh->logfile);
       int tx_waiting = tx->semno;
       tx->remove_tx();
-      fprintf(ZGT_Sh->logfile, "T%ld\t RemovedTx\n", tx->tid); // Write log record and close
+      printf( "T%ld\t RemovedTx\n", tx->tid); // Write log record and close
       fflush(ZGT_Sh->logfile);
       if (tx_waiting != -1)
       {
@@ -474,13 +474,13 @@ void *do_commit_abort_operation(long t, char status)
           zgt_v(tx_waiting);
         }
       }
-      fprintf(ZGT_Sh->logfile, "\t Wokenup SleepingTx\n"); // Write log record and close
+      printf( "\t Wokenup SleepingTx\n"); // Write log record and close
       fflush(ZGT_Sh->logfile);
     }
     else
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
-      fprintf(ZGT_Sh->logfile, "T\tTrying to commit/abort an invalid Tx");
+      printf( "T%ld\t%c \tTxStatus\n", tx->tid, tx->status); // Write log record and close
+      printf( "T\tTrying to commit/abort an invalid Tx");
       fflush(ZGT_Sh->logfile);
       printf("Tx does not exists");
     }
@@ -745,17 +745,15 @@ void zgt_tx::perform_read_write_operation(long tid, long obno, char lockmode)
   if (lockmode == 'X')
   {
     ZGT_Sh->objarray[obno]->value = lock + 1;
-    fprintf(logfile, "T%ld\tWriteTx\t%ld:%d:%d\tWriteLock\tGranted\t%c\n", this->tid, obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
-    printf("T%ld\tWriteTx\t%ld:%d:%d\t\tWriteLock\tGranted\t%c\n", this->tid, obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
-    fflush(logfile);
+     fprintf(ZGT_Sh->logfile,"T%ld\t writeTx\t\t%ld:%d:%d\t\t\tWriteLock\tGranted\t\t %c\n",this->tid, obno,ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid],this->status);        
+    fflush(ZGT_Sh->logfile);
   }
 
   else if (lockmode == 'S')
   {
     ZGT_Sh->objarray[obno]->value = lock - 1;
-    fprintf(logfile, "T%ld\tReadTx\t%ld:%d:%d\tReadLock\tGranted\t%c\n", this->tid, obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
-    printf("T%ld\tReadTx\t%ld:%d:%d\tReadLock\tGranted\t%c\n", this->tid, obno, ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid], this->status);
-    fflush(logfile);
+     fprintf(ZGT_Sh->logfile,"T%ld\t ReadTx\t\t%ld:%d:%d\t\t\tReadLock\tGranted\t\t %c\n",this->tid, obno,ZGT_Sh->objarray[obno]->value, ZGT_Sh->optime[tid],this->status);
+     fflush(ZGT_Sh->logfile);
   }
 }
 
