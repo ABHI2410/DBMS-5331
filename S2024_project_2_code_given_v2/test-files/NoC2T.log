@@ -1,5 +1,0 @@
----------------------------------------------------------------------------
-TxId	Txtype	Operation	ObId:Obvalue:optime	LockType	Status		TxStatus
-T1	R 	BeginTx
-T2	W 	BeginTx
-T1	  	 Tx Read Initiated
