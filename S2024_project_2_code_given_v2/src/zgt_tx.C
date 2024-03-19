@@ -439,13 +439,13 @@ void *do_commit_abort_operation(long t, char status)
   // write your code
   if (status == TR_ABORT)
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t AbortTx\n", tx->tid); // Write log record and close
+    fprintf(ZGT_Sh->logfile, "T%ld\t AbortTx\n", t); // Write log record and close
     fflush(ZGT_Sh->logfile);
     printf("Abort Tx");
   }
   else if (status == TR_END)
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t CommitTx\n", tx->tid); // Write log record and close
+    fprintf(ZGT_Sh->logfile, "T%ld\t CommitTx\n", t); // Write log record and close
     fflush(ZGT_Sh->logfile);
     printf("Commit Tx");
   }
@@ -525,51 +525,51 @@ int zgt_tx::set_lock(long tid1, long sgno1, long obno1, int count, char lockmode
   zgt_hlink *node, *node_tx, *temp;
   zgt_tx *tx;
   zgt_p(0);
-  fprintf(ZGT_Sh->logfile, "T%ld\t Check for lock on object %ld\n", this->tid,this->obno);
+  fprintf(ZGT_Sh->logfile, "T%ld\t Check for lock on object %ld\n", this->tid, this->obno);
   fflush(ZGT_Sh->logfile);
   node = ZGT_Ht->find(sgno1, obno1);
   zgt_v(0);
   tx = get_tx(tid1);
   if (node == NULL)
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t No lock on object %ld\n", this->tid,this->obno);
+    fprintf(ZGT_Sh->logfile, "T%ld\t No lock on object %ld\n", this->tid, this->obno);
     fflush(ZGT_Sh->logfile);
     zgt_p(0);
     ZGT_Ht->add(tx, sgno1, obno1, lockmode1);
     perform_read_write_operation(tid1, obno1, lockmode1);
     zgt_v(0);
-    fprintf(ZGT_Sh->logfile, "T%ld\t Lock %c Granted for %ld\n", this->tid,lockmode1,this->obno);
+    fprintf(ZGT_Sh->logfile, "T%ld\t Lock %c Granted for %ld\n", this->tid, lockmode1, this->obno);
     fflush(ZGT_Sh->logfile);
     return 0;
   }
   else
   {
-    fprintf(ZGT_Sh->logfile, "T%ld\t Object %ld with %c lock \n", this->tid,this->obno,node->lockmode);
+    fprintf(ZGT_Sh->logfile, "T%ld\t Object %ld with %c lock \n", this->tid, this->obno, node->lockmode);
     fflush(ZGT_Sh->logfile);
     zgt_p(0);
     temp = ZGT_Ht->findt(this->tid, sgno1, obno1);
     zgt_v(0);
     if (temp != NULL)
     {
-      fprintf(ZGT_Sh->logfile, "T%ld\t has %c lock for object %ld\n", this->tid,temp->lockmode,this->obno);
-      fprintf(ZGT_Sh->logfile,"Performing Read/Write");   
+      fprintf(ZGT_Sh->logfile, "T%ld\t has %c lock for object %ld\n", this->tid, temp->lockmode, this->obno);
+      fprintf(ZGT_Sh->logfile, "Performing Read/Write");
       perform_read_write_operation(tid1, obno1, lockmode1);
       fflush(ZGT_Sh->logfile);
     }
     else
     {
-      fprintf(ZGT_Sh->logfile,"Check for current lock on the object %ld",this->obno); 
+      fprintf(ZGT_Sh->logfile, "Check for current lock on the object %ld", this->obno);
       fflush(ZGT_Sh->logfile);
       int wait = zgt_nwait(node->tid);
       if ((lockmode1 == 'S' && node->lockmode == 'S' && wait > 0) || (lockmode1 == 'X') || (node->lockmode == 'X' && lockmode1 == 'S'))
       {
-        fprintf(ZGT_Sh->logfile,"Lock %c cannot be Granted for object %ld",lockmode1,this->obno); 
+        fprintf(ZGT_Sh->logfile, "Lock %c cannot be Granted for object %ld", lockmode1, this->obno);
         fflush(ZGT_Sh->logfile);
         tx->obno = obno1;
         tx->lockmode = lockmode1;
         tx->status = TR_WAIT;
         tx->setTx_semno(node->tid, node->tid);
-        fprintf(ZGT_Sh->logfile,"T\t%ld needs to wait for lock",this->tid); 
+        fprintf(ZGT_Sh->logfile, "T\t%ld needs to wait for lock", this->tid);
         fflush(ZGT_Sh->logfile);
         zgt_p(node->tid);
         tx->obno = -1;
@@ -580,7 +580,7 @@ int zgt_tx::set_lock(long tid1, long sgno1, long obno1, int count, char lockmode
       }
       else
       {
-        fprintf(ZGT_Sh->logfile,"Lock %c can be Granted for object %ld",lockmode1,this->obno); 
+        fprintf(ZGT_Sh->logfile, "Lock %c can be Granted for object %ld", lockmode1, this->obno);
         fflush(ZGT_Sh->logfile);
         perform_read_write_operation(tid1, obno1, lockmode1);
       }
