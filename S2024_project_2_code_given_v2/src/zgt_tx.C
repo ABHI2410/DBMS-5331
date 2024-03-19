@@ -31,6 +31,8 @@ extern zgt_tm *ZGT_Sh; // Transaction manager object
 /* Initializes transaction id and status and thread id */
 /* Input: Transaction id, status, thread id */
 
+FILE *logfile;
+
 zgt_tx::zgt_tx(long tid, char Txstatus, char type, pthread_t thrid)
 {
   this->lockmode = (char)' '; // default
@@ -137,7 +139,7 @@ void *readtx(void *arg)
     }
     else if (tx->status == TR_ACTIVE)
     {
-      tx->set_lock(node->tid, node->obno, node->count, 'S');
+      tx->set_lock(node->tid, 1,node->obno, node->count, 'S');
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
@@ -190,7 +192,7 @@ void *writetx(void *arg)
     }
     else if (tx->status == TR_ACTIVE)
     {
-      tx->set_lock(node->tid, node->obno, node->count, 'X');
+      tx->set_lock(node->tid,1, node->obno, node->count, 'X');
       zgt_v(0);
       finish_operation(tx->tid);
       pthread_exit(NULL);
@@ -212,7 +214,7 @@ void *writetx(void *arg)
 
 void *process_read_write_operation(long tid, long obno, int count, char mode)
 {                                           // do the operations for writing; similar to readTx
-  struct param *node = (struct param *)arg; // struct parameter that contains
+  /* struct param *node = (struct param *)arg; // struct parameter that contains
   // need to implement this               15 points
   // do the operations for writing; similar to readTx. Write your code
   start_operation(node->tid, node->count);
@@ -251,7 +253,7 @@ void *process_read_write_operation(long tid, long obno, int count, char mode)
       }
       else if (tx->status == TR_ACTIVE)
       {
-        tx->set_lock(node->tid, node->obno, node->count, 'S');
+        tx->set_lock(node->tid,1, node->obno, node->count, 'S');
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
@@ -300,7 +302,7 @@ void *process_read_write_operation(long tid, long obno, int count, char mode)
       }
       else if (tx->status == TR_ACTIVE)
       {
-        tx->set_lock(node->tid, node->obno, node->count, 'S');
+        tx->set_lock(node->tid,1, node->obno, node->count, 'S');
         zgt_v(0);
         finish_operation(tx->tid);
         pthread_exit(NULL);
@@ -320,7 +322,7 @@ void *process_read_write_operation(long tid, long obno, int count, char mode)
   else
   {
     printf("Invalid Mode");
-  }
+  }  */
 }
 
 void *aborttx(void *arg)
@@ -453,10 +455,13 @@ int zgt_tx::set_lock(long tid1, long sgno1, long obno1, int count, char lockmode
   // write your code
   zgt_hlink *node, *node_tx, *temp;
   zgt_tx *tx;
+  zgt_p(0);
   node = ZGT_Ht->find(sgno1, obno1);
+  zgt_v(0);
   tx = get_tx(tid1);
   if (node == NULL)
   {
+    zgt_p(0);
     ZGT_Ht->add(tx, sgno1, obno1, lockmode1);
     perform_read_write_operation(tid1, obno1, lockmode1);
     zgt_v(0);
@@ -464,33 +469,62 @@ int zgt_tx::set_lock(long tid1, long sgno1, long obno1, int count, char lockmode
   }
   else
   {
+    zgt_p(0);
     temp = ZGT_Ht->findt(this->tid,sgno1,obno1);
-    if (temp == NULL)
+    zgt_v(0);
+    if (temp != NULL)
     {
-      temp_tx = this->other_lock(node,sgno1,obno1);
-      if(temp_tx != NULL)
+      perform_read_write_operation(tid1,obno1,lockmode1);
+    }
+    else
+    {
+      int wait = zgn_nwait(node->tid);
+      if((lockmode1 == 'S' && node->lockmode1 == 'S' && wait > 0) || (lockmode1 == 'X') || node->lockmode1 == 'X'))
       {
+        tx->obno = obno1;
+        tx->lockmode = lockmode1;
         tx->status = TR_WAIT;
-        tx->lockemode = lockmode1;
+        tx->setTX_semno(node->tid,node->tid);
+        zgt_p(node->tid);
+        tx->obno = -1;
+        tx->lockmode = '';
+        tx->status = TR_ACTIVE;
+        zgt_v(node->tid);
+
+      }
+      else
+      {
+        perform_read_write_operation(tid1,obno1,lockmode1);
+
+      }
+     
+
+    }
+      /*temp_tx = this->other_lock(node,sgno1,obno1);
+      //if(temp_tx != NULL)
+      //{
+        tx->status = TR_WAIT;
+        tx->lockmode = lockmode1;
         tx->obno = obno1;
         tx->setTx_semno(node_tx->tid,node_tx->tid);
         zgt_v(0);
         zgt_p(node_tx->tid);
         tx->status = TR_ACTIVE;
         zgt_p(0);
-        setlock(tx->tid,tx->sgno,tx->obno,count,tx->lockmode);
+        //set_lock(tx->tid,tx->sgno,tx->obno,count,tx->lockmode);
       }
       else
       {
         return 0;
       }
-    }
+    
     status = TR_ACTIVE;
     node->lockmode = lockmode1;
     this->perform_read_write_operation(tid,obno1,lockmode1);
-    zgt_v(0);
+    zgt_v(0);*/
 
   }
+  return 0;
 }
 
 int zgt_tx::free_locks()
