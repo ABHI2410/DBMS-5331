@@ -132,6 +132,7 @@ void *readtx(void *arg)
       do_commit_abort_operation(tx->tid, TR_ABORT);
       zgt_v(0);
       finish_operation(tx->tid);
+      pthread_exit(NULL);
     }
     else if (tx->status == TR_WAIT)
     {
