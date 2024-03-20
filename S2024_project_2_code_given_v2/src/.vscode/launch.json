@@ -5,13 +5,11 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
-      "args": [
-        "../test-files/NoC2T.txt"
-      ],
+      "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "//wsl.localhost/Ubuntu/home/bhattaraimuna/DBMS-5331/S2024_project_2_code_given_v2/src",
-      "program": "//wsl.localhost/Ubuntu/home/bhattaraimuna/DBMS-5331/S2024_project_2_code_given_v2/src/build/Debug/outDebug",
+      "cwd": "c:/Users/USER/OneDrive/Documents/DBMS models/DBMS-5331/S2024_project_2_code_given_v2/src",
+      "program": "c:/Users/USER/OneDrive/Documents/DBMS models/DBMS-5331/S2024_project_2_code_given_v2/src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

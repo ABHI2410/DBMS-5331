@@ -38,7 +38,7 @@ void zgt_tm::openlog(string lfile)
 // ASantra [2/12/2024]: Commented out to properly name logfiles
 // logfilename[--i] = '\0';
 #ifdef TM_DEBUG
-   printf("\nGiven log file name: %s\n", logfile);
+   printf("\nGiven log file name: %p\n", logfile);
    fflush(stdout);
 #endif
    if ((this->logfile = fopen(this->logfilename, "w")) == NULL)
@@ -65,7 +65,7 @@ int zgt_tm::BeginTx(long tid, int thrNum, char type)
    // begintx(void *thdarg) .Pass the thread arguments in a structure.
 
 #ifdef TM_DEBUG
-   printf("\ncreating BeginTx thread for Tx: %d\n", tid);
+   printf("\ncreating BeginTx thread for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    struct param *nodeinfo = (struct param *)malloc(sizeof(struct param));
@@ -82,7 +82,7 @@ int zgt_tm::BeginTx(long tid, int thrNum, char type)
       exit(-1);
    }
 #ifdef TM_DEBUG
-   printf("\nfinished creating BeginTx thread for Tx: %d\n", tid);
+   printf("\nfinished creating BeginTx thread for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    return (0);
@@ -98,7 +98,7 @@ int zgt_tm::TxRead(long tid, long obno, int thrNum)
    // now create the thread and call the method readtx(void *)
 
 #ifdef TM_DEBUG
-   printf("\ncreating TxRead thread for Tx: %d\n", tid);
+   printf("\ncreating TxRead thread for Tx: %ld\n", tid);
    fflush(stdout);
    fflush(stdout);
 #endif
@@ -118,7 +118,7 @@ int zgt_tm::TxRead(long tid, long obno, int thrNum)
    }
 
 #ifdef TM_DEBUG
-   printf("\nexiting TxRead thread create for Tx: %d\n", tid);
+   printf("\nexiting TxRead thread create for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    return (0); // successful operation
@@ -134,7 +134,7 @@ int zgt_tm::TxWrite(long tid, long obno, int thrNum)
    // now create the thread and call the method readtx(void *)
 
 #ifdef TM_DEBUG
-   printf("\ncreating TxRead thread for Tx: %d\n", tid);
+   printf("\ncreating TxRead thread for Tx: %ld\n", tid);
    fflush(stdout);
    fflush(stdout);
 #endif
@@ -154,7 +154,7 @@ int zgt_tm::TxWrite(long tid, long obno, int thrNum)
    }
 
 #ifdef TM_DEBUG
-   printf("\nexiting TxRead thread create for Tx: %d\n", tid);
+   printf("\nexiting TxRead thread create for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    return (0); // successful operation
@@ -170,7 +170,7 @@ int zgt_tm::CommitTx(long tid, int thrNum)
    // now create the thread and call the method readtx(void *)
 
 #ifdef TM_DEBUG
-   printf("\ncreating TxRead thread for Tx: %d\n", tid);
+   printf("\ncreating TxRead thread for Tx: %ld\n", tid);
    fflush(stdout);
    fflush(stdout);
 #endif
@@ -190,7 +190,7 @@ int zgt_tm::CommitTx(long tid, int thrNum)
    }
 
 #ifdef TM_DEBUG
-   printf("\nexiting TxRead thread create for Tx: %d\n", tid);
+   printf("\nexiting TxRead thread create for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    return (0); // successful operation
@@ -206,7 +206,7 @@ int zgt_tm::AbortTx(long tid, int thrNum)
    // now create the thread and call the method readtx(void *)
 
 #ifdef TM_DEBUG
-   printf("\ncreating TxRead thread for Tx: %d\n", tid);
+   printf("\ncreating TxRead thread for Tx: %ld\n", tid);
    fflush(stdout);
    fflush(stdout);
 #endif
@@ -226,7 +226,7 @@ int zgt_tm::AbortTx(long tid, int thrNum)
    }
 
 #ifdef TM_DEBUG
-   printf("\nexiting TxRead thread create for Tx: %d\n", tid);
+   printf("\nexiting TxRead thread create for Tx: %ld\n", tid);
    fflush(stdout);
 #endif
    return (0); // successful operation
