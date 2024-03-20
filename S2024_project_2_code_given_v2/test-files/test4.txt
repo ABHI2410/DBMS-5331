@@ -1,7 +1,5 @@
 // Interconnected transactions without deadlock
-LogFile ../test-files/interconnected_complex.log
-
-
+LogFile ../test-files/test4.log
 BeginTx 1 W
 Read    1 2
 Read    1 3
@@ -32,5 +30,4 @@ Read    6 3
 Read    6 5
 Write   6 9
 Commit  6
-
 End All
