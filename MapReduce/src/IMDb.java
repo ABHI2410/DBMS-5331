@@ -23,8 +23,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 public class IMDb {
   /*
    * Mapper class
-   * expected input data types : Key Object, Value Text
-   * expected output data types: Key Text, Value IntWriteable
+   * expected input data types : Key of Object type , Value of Text type
+   * expected output data types: Key of Text type , Value of IntWriteable type
    */
   public static class IMDbMapper extends Mapper<Object, Text, Text, IntWritable> {
     // Declaring class Variables
@@ -88,8 +88,8 @@ public class IMDb {
 
   /*
    * Reducer class
-   * expected input data types : Key Text, Value IntWriteable
-   * expected output data types: Key Text, Value IntWriteable
+   * expected input data types : Key of Text type , Value of IntWriteable type
+   * expected output data types: Key of Text type , Value of IntWriteable type
    */
   public static class IMDbReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
     // Class variables
