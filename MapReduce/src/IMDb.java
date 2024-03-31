@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.LongWritable;
+// import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -64,25 +64,31 @@ public class IMDb {
       String[] genresList;
       String period;
       String genre;
-      // Spilt the string into array for easy accessability
-      String[] strToArr = value.toString().split(";");
-      // check if the entry is a movie with high rating
-      if (strToArr[1].equals("movie") && Double.parseDouble(strToArr[4]) >= 7.5) {
-        genresList = strToArr[5].split(",");
-        // get the year period
-        try {
-          period = CheckPeriod(Integer.parseInt(strToArr[3]));
-        } catch (NumberFormatException e) {
-          return;
+      try {
+        // Spilt the string into array for easy accessability
+        String[] strToArr = value.toString().split(";");
+        // check if the entry is a movie with high rating
+        if (strToArr[1].equals("movie") && Double.parseDouble(strToArr[4]) >= 7.5) {
+          genresList = strToArr[5].split(",");
+          // get the year period
+          try {
+            period = CheckPeriod(Integer.parseInt(strToArr[3]));
+          } catch (NumberFormatException e) {
+            return;
+          }
+          // get the genre type
+          genre = CheckGenre(genresList);
+          // set the key in the desired format and pass to the reducer
+          if (period != null && genre != null) {
+            genreAndPeriod.set(period + "," + genre);
+            context.write(genreAndPeriod, one);
+          }
         }
-        // get the genre type
-        genre = CheckGenre(genresList);
-        // set the key in the desired format and pass to the reducer
-        if (period != null && genre != null) {
-          genreAndPeriod.set(period + "," + genre);
-          context.write(genreAndPeriod, one);
-        }
+      } catch (Exception e) {
+        System.err.println(e);
+        return;
       }
+
     }
   }
 
@@ -103,6 +109,7 @@ public class IMDb {
       for (IntWritable val : values) {
         sum += val.get();
       }
+
       // need to output IntWriteable so change the datatype
       result.set(sum);
       // write the output
