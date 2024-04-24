@@ -119,7 +119,7 @@ public class IMDb {
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration(); // create a configuration object
-    conf.set("mapred.textoutputformat.separator", ","); // change default the key value seperator from " " to ","
+    conf.set("mapreduce.output.textoutputformat.separator", ","); // change default the key value seperator from " " to ","
     Job job = Job.getInstance(conf, "Movie count for specific genre and decade"); // create a MapReduce Job
     job.setJarByClass(IMDb.class); // declare main class
     job.setMapperClass(IMDbMapper.class); // declare mapper class
